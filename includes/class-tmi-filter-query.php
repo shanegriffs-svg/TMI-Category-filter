@@ -5,8 +5,6 @@ defined( 'ABSPATH' ) || exit;
 final class TMI_Filter_Query {
 
 	public static function init() {
-		add_action( 'template_redirect', array( __CLASS__, 'redirect_legacy_wbw_filters' ), 5 );
-
 		add_filter(
 			'pre_option_woocommerce_hide_out_of_stock_items',
 			array( __CLASS__, 'allow_out_of_stock_on_supported_archives' ),
@@ -22,62 +20,6 @@ final class TMI_Filter_Query {
 		);
 
 		add_action( 'woocommerce_product_query', array( __CLASS__, 'apply_filters_to_product_query' ), 50, 1 );
-	}
-
-	/**
-	 * Convert legacy WBW Zero Turn Mower links to the TMI filter format.
-	 *
-	 * Example:
-	 * ?wpf_fbv=1&pr_stock=instock&wpf_filter_brand=hustler-zero-turn-mower
-	 * becomes:
-	 * ?tmi_brand=hustler-zero-turn-mower&tmi_stock=instock
-	 */
-	public static function redirect_legacy_wbw_filters() {
-		if ( ! TMI_Filter_Config::is_supported_archive() ) {
-			return;
-		}
-
-		$has_legacy_brand = isset( $_GET['wpf_filter_brand'] ) && '' !== $_GET['wpf_filter_brand'];
-		$has_legacy_stock = isset( $_GET['pr_stock'] ) && '' !== $_GET['pr_stock'];
-
-		if ( ! $has_legacy_brand && ! $has_legacy_stock ) {
-			return;
-		}
-
-		$category = TMI_Filter_Config::get_current_supported_category();
-		$params   = TMI_Filter_Config::get_query_params();
-
-		if ( ! $category ) {
-			return;
-		}
-
-		$args = array();
-
-		if ( $has_legacy_brand ) {
-			$brand = sanitize_title( wp_unslash( $_GET['wpf_filter_brand'] ) );
-			if ( $brand ) {
-				$args[ $params['brand'] ] = $brand;
-			}
-		}
-
-		if ( $has_legacy_stock ) {
-			$stock = sanitize_key( wp_unslash( $_GET['pr_stock'] ) );
-			if ( 'instock' === $stock ) {
-				$args[ $params['stock'] ] = 'instock';
-			}
-		}
-
-		$target = get_term_link( $category );
-		if ( is_wp_error( $target ) ) {
-			return;
-		}
-
-		if ( $args ) {
-			$target = add_query_arg( $args, $target );
-		}
-
-		wp_safe_redirect( $target, 301 );
-		exit;
 	}
 
 	public static function allow_out_of_stock_on_supported_archives( $pre_option ) {
