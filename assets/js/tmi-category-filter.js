@@ -12,7 +12,6 @@
 	const minimumLoadingMs       = 320;
 
 	let requestController = null;
-	let priceTimer        = null;
 
 	function getForm() {
 		return document.querySelector( formSelector );
@@ -29,6 +28,75 @@
 	function wait( milliseconds ) {
 		return new Promise( function ( resolve ) {
 			window.setTimeout( resolve, milliseconds );
+		} );
+	}
+
+	function formatCurrency( value ) {
+		const amount = Number.isFinite( value ) ? Math.round( value ) : 0;
+		return '$' + amount.toLocaleString( 'en-AU' );
+	}
+
+	function syncPriceSlider( slider, changedInput ) {
+		if ( ! slider ) {
+			return;
+		}
+
+		const minInput = slider.querySelector( '.tmi-price-range-min' );
+		const maxInput = slider.querySelector( '.tmi-price-range-max' );
+		const minOutput = slider.querySelector( '.tmi-price-output-min' );
+		const maxOutput = slider.querySelector( '.tmi-price-output-max' );
+
+		if ( ! minInput || ! maxInput ) {
+			return;
+		}
+
+		const lowerLimit = Number( minInput.min ) || 0;
+		const upperLimit = Number( minInput.max ) || 50000;
+		let minValue     = Number( minInput.value );
+		let maxValue     = Number( maxInput.value );
+
+		if ( ! Number.isFinite( minValue ) ) {
+			minValue = lowerLimit;
+		}
+
+		if ( ! Number.isFinite( maxValue ) ) {
+			maxValue = upperLimit;
+		}
+
+		if ( minValue > maxValue ) {
+			if ( changedInput === maxInput ) {
+				maxValue = minValue;
+				maxInput.value = String( maxValue );
+			} else {
+				minValue = maxValue;
+				minInput.value = String( minValue );
+			}
+		}
+
+		const range = Math.max( 1, upperLimit - lowerLimit );
+		const minPosition = ( ( minValue - lowerLimit ) / range ) * 100;
+		const maxPosition = ( ( maxValue - lowerLimit ) / range ) * 100;
+
+		slider.style.setProperty( '--tmi-price-min-pos', minPosition + '%' );
+		slider.style.setProperty( '--tmi-price-max-pos', maxPosition + '%' );
+
+		if ( minOutput ) {
+			minOutput.textContent = formatCurrency( minValue );
+		}
+
+		if ( maxOutput ) {
+			maxOutput.textContent = formatCurrency( maxValue );
+		}
+
+		minInput.style.zIndex = minValue > upperLimit - ( range * 0.1 ) ? '5' : '3';
+		maxInput.style.zIndex = '4';
+	}
+
+	function initializePriceSliders( root ) {
+		const scope = root || document;
+
+		scope.querySelectorAll( '.tmi-price-slider' ).forEach( function ( slider ) {
+			syncPriceSlider( slider, null );
 		} );
 	}
 
@@ -106,6 +174,7 @@
 
 		if ( currentForm && nextForm ) {
 			currentForm.replaceWith( nextForm );
+			initializePriceSliders( nextForm );
 		}
 	}
 
@@ -215,6 +284,12 @@
 			return;
 		}
 
+		if ( field.matches( 'input[type="range"]' ) ) {
+			syncPriceSlider( field.closest( '.tmi-price-slider' ), field );
+			applyCurrentForm();
+			return;
+		}
+
 		if ( field.matches( 'input[type="checkbox"], input[type="radio"], select' ) ) {
 			applyCurrentForm();
 		}
@@ -224,12 +299,11 @@
 		const field = event.target;
 		const form  = field.closest( formSelector );
 
-		if ( ! form || ! field.matches( 'input[type="number"]' ) ) {
+		if ( ! form || ! field.matches( 'input[type="range"]' ) ) {
 			return;
 		}
 
-		window.clearTimeout( priceTimer );
-		priceTimer = window.setTimeout( applyCurrentForm, 650 );
+		syncPriceSlider( field.closest( '.tmi-price-slider' ), field );
 	} );
 
 	document.addEventListener( 'click', function ( event ) {
@@ -252,4 +326,6 @@
 	window.addEventListener( 'popstate', function () {
 		loadUrl( window.location.href, false );
 	} );
+
+	initializePriceSliders( document );
 }() );
