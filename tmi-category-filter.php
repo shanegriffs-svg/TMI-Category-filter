@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TMI Category Filter
  * Description: Lightweight WooCommerce category filters for TMI product archives, beginning with Zero Turn Mowers.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: TMI Tractor Shop
  * Requires Plugins: woocommerce
  * Requires PHP: 7.4
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TMI_CATEGORY_FILTER_VERSION', '0.1.0' );
+define( 'TMI_CATEGORY_FILTER_VERSION', '0.2.0' );
 define( 'TMI_CATEGORY_FILTER_FILE', __FILE__ );
 define( 'TMI_CATEGORY_FILTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TMI_CATEGORY_FILTER_URL', plugin_dir_url( __FILE__ ) );
@@ -39,6 +39,14 @@ final class TMI_Category_Filter {
 			TMI_CATEGORY_FILTER_URL . 'assets/css/tmi-category-filter.css',
 			array(),
 			TMI_CATEGORY_FILTER_VERSION
+		);
+
+		wp_enqueue_script(
+			'tmi-category-filter',
+			TMI_CATEGORY_FILTER_URL . 'assets/js/tmi-category-filter.js',
+			array(),
+			TMI_CATEGORY_FILTER_VERSION,
+			true
 		);
 	}
 }
