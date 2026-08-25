@@ -18,6 +18,18 @@ final class TMI_Filter_Renderer {
 		$attribute_filters = TMI_Filter_Config::get_attribute_filters();
 		$params            = TMI_Filter_Config::get_query_params();
 		$product_ids       = self::get_base_category_product_ids( $category );
+		$price_min_limit   = 0;
+		$price_max_limit   = 50000;
+		$price_step        = 500;
+		$current_min_price = self::get_price_value( $params['min_price'], $price_min_limit, $price_min_limit, $price_max_limit );
+		$current_max_price = self::get_price_value( $params['max_price'], $price_max_limit, $price_min_limit, $price_max_limit );
+
+		if ( $current_min_price > $current_max_price ) {
+			$current_min_price = $current_max_price;
+		}
+
+		$min_position = ( ( $current_min_price - $price_min_limit ) / ( $price_max_limit - $price_min_limit ) ) * 100;
+		$max_position = ( ( $current_max_price - $price_min_limit ) / ( $price_max_limit - $price_min_limit ) ) * 100;
 
 		ob_start();
 		?>
@@ -46,9 +58,49 @@ final class TMI_Filter_Renderer {
 
 				<fieldset class="tmi-filter-group tmi-filter-price">
 					<legend><?php esc_html_e( 'Price', 'tmi-category-filter' ); ?></legend>
-					<div class="tmi-filter-price-inputs">
-						<label><span><?php esc_html_e( 'Min', 'tmi-category-filter' ); ?></span><input type="number" min="0" step="100" name="<?php echo esc_attr( $params['min_price'] ); ?>" value="<?php echo esc_attr( self::get_scalar_value( $params['min_price'] ) ); ?>"></label>
-						<label><span><?php esc_html_e( 'Max', 'tmi-category-filter' ); ?></span><input type="number" min="0" step="100" name="<?php echo esc_attr( $params['max_price'] ); ?>" value="<?php echo esc_attr( self::get_scalar_value( $params['max_price'] ) ); ?>"></label>
+					<div
+						class="tmi-price-slider"
+						style="--tmi-price-min-pos: <?php echo esc_attr( number_format( $min_position, 2, '.', '' ) ); ?>%; --tmi-price-max-pos: <?php echo esc_attr( number_format( $max_position, 2, '.', '' ) ); ?>%;"
+					>
+						<div class="tmi-price-values" aria-live="polite">
+							<span class="tmi-price-value">
+								<small><?php esc_html_e( 'Min', 'tmi-category-filter' ); ?></small>
+								<output class="tmi-price-output tmi-price-output-min">$<?php echo esc_html( number_format_i18n( $current_min_price ) ); ?></output>
+							</span>
+							<span class="tmi-price-value tmi-price-value-max">
+								<small><?php esc_html_e( 'Max', 'tmi-category-filter' ); ?></small>
+								<output class="tmi-price-output tmi-price-output-max">$<?php echo esc_html( number_format_i18n( $current_max_price ) ); ?></output>
+							</span>
+						</div>
+
+						<div class="tmi-price-range-wrap">
+							<div class="tmi-price-track" aria-hidden="true"><span></span></div>
+							<input
+								type="range"
+								class="tmi-price-range tmi-price-range-min"
+								min="<?php echo esc_attr( $price_min_limit ); ?>"
+								max="<?php echo esc_attr( $price_max_limit ); ?>"
+								step="<?php echo esc_attr( $price_step ); ?>"
+								name="<?php echo esc_attr( $params['min_price'] ); ?>"
+								value="<?php echo esc_attr( $current_min_price ); ?>"
+								aria-label="<?php esc_attr_e( 'Minimum price', 'tmi-category-filter' ); ?>"
+							>
+							<input
+								type="range"
+								class="tmi-price-range tmi-price-range-max"
+								min="<?php echo esc_attr( $price_min_limit ); ?>"
+								max="<?php echo esc_attr( $price_max_limit ); ?>"
+								step="<?php echo esc_attr( $price_step ); ?>"
+								name="<?php echo esc_attr( $params['max_price'] ); ?>"
+								value="<?php echo esc_attr( $current_max_price ); ?>"
+								aria-label="<?php esc_attr_e( 'Maximum price', 'tmi-category-filter' ); ?>"
+							>
+						</div>
+
+						<div class="tmi-price-scale" aria-hidden="true">
+							<span>$<?php echo esc_html( number_format_i18n( $price_min_limit ) ); ?></span>
+							<span>$<?php echo esc_html( number_format_i18n( $price_max_limit ) ); ?></span>
+						</div>
 					</div>
 				</fieldset>
 
@@ -141,5 +193,16 @@ final class TMI_Filter_Renderer {
 		}
 
 		return sanitize_text_field( wp_unslash( $_GET[ $param_name ] ) );
+	}
+
+	private static function get_price_value( $param_name, $default, $minimum, $maximum ) {
+		$value = self::get_scalar_value( $param_name );
+
+		if ( '' === $value || ! is_numeric( $value ) ) {
+			return $default;
+		}
+
+		$value = (int) round( (float) $value );
+		return max( $minimum, min( $maximum, $value ) );
 	}
 }
