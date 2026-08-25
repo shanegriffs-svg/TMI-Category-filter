@@ -1,8 +1,8 @@
 ( function () {
 	'use strict';
 
-	const formSelector   = '.tmi-category-filter';
-	const resultsSelector = '#tmi-product-results';
+	const formSelector      = '.tmi-category-filter';
+	const resultsSelector   = '#tmi-product-results';
 	const fallbackSelectors = [
 		'.woocommerce-result-count',
 		'.woocommerce-ordering',
@@ -17,6 +17,21 @@
 
 	function getForm() {
 		return document.querySelector( formSelector );
+	}
+
+	function prefersReducedMotion() {
+		return window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+	}
+
+	function enhanceFilterUi() {
+		document.querySelectorAll( formSelector ).forEach( function ( form ) {
+			const applyButton = form.querySelector( '.tmi-filter-apply' );
+
+			if ( applyButton ) {
+				applyButton.hidden = true;
+				applyButton.setAttribute( 'aria-hidden', 'true' );
+			}
+		} );
 	}
 
 	function buildUrl( form ) {
@@ -35,19 +50,43 @@
 		return url.toString();
 	}
 
+	function styleLoadingTarget( element, loading ) {
+		if ( ! element ) {
+			return;
+		}
+
+		element.style.transition   = prefersReducedMotion() ? 'none' : 'opacity 180ms ease';
+		element.style.opacity      = loading ? '0.45' : '1';
+		element.style.pointerEvents = loading ? 'none' : '';
+		element.setAttribute( 'aria-busy', loading ? 'true' : 'false' );
+	}
+
 	function setLoading( loading ) {
-		const form = getForm();
+		const form    = getForm();
 		const results = document.querySelector( resultsSelector ) || document.querySelector( 'ul.products' );
 
 		if ( form ) {
 			form.classList.toggle( 'is-loading', loading );
 			form.setAttribute( 'aria-busy', loading ? 'true' : 'false' );
+			form.style.opacity       = loading ? '0.72' : '1';
+			form.style.pointerEvents = loading ? 'none' : '';
 		}
 
 		if ( results ) {
 			results.classList.toggle( 'tmi-is-loading', loading );
-			results.setAttribute( 'aria-busy', loading ? 'true' : 'false' );
+			styleLoadingTarget( results, loading );
 		}
+	}
+
+	function prepareIncomingResults( element ) {
+		if ( ! element ) {
+			return;
+		}
+
+		element.style.transition   = prefersReducedMotion() ? 'none' : 'opacity 180ms ease';
+		element.style.opacity      = '0.45';
+		element.style.pointerEvents = 'none';
+		element.setAttribute( 'aria-busy', 'true' );
 	}
 
 	function replaceNodeFromResponse( parsedDocument, selector ) {
@@ -67,6 +106,7 @@
 		const nextResults    = parsedDocument.querySelector( resultsSelector );
 
 		if ( currentResults && nextResults ) {
+			prepareIncomingResults( nextResults );
 			currentResults.replaceWith( nextResults );
 			return true;
 		}
@@ -88,6 +128,7 @@
 
 		if ( currentForm && nextForm ) {
 			currentForm.replaceWith( nextForm );
+			enhanceFilterUi();
 		}
 	}
 
@@ -140,7 +181,10 @@
 				window.history.pushState( { tmiCategoryFilter: true }, '', url );
 			}
 
-			setLoading( false );
+			window.requestAnimationFrame( function () {
+				setLoading( false );
+			} );
+
 			notifyUpdated( url );
 		} catch ( error ) {
 			if ( error.name === 'AbortError' ) {
@@ -218,4 +262,6 @@
 	window.addEventListener( 'popstate', function () {
 		loadUrl( window.location.href, false );
 	} );
+
+	enhanceFilterUi();
 }() );
