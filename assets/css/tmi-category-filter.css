@@ -1,0 +1,79 @@
+.tmi-category-filter {
+	width: 100%;
+}
+
+.tmi-filter-groups {
+	display: grid;
+	gap: 1.25rem;
+}
+
+.tmi-filter-group {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.tmi-filter-group legend {
+	margin-bottom: .65rem;
+	font-weight: 700;
+}
+
+.tmi-filter-options {
+	display: grid;
+	gap: .45rem;
+}
+
+.tmi-filter-option {
+	display: flex;
+	align-items: center;
+	gap: .55rem;
+	cursor: pointer;
+}
+
+.tmi-filter-option input {
+	margin: 0;
+}
+
+.tmi-filter-price-inputs {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: .65rem;
+}
+
+.tmi-filter-price-inputs label {
+	display: grid;
+	gap: .35rem;
+}
+
+.tmi-filter-price-inputs input {
+	width: 100%;
+}
+
+.tmi-filter-actions {
+	display: flex;
+	align-items: center;
+	gap: .8rem;
+	margin-top: 1.25rem;
+	flex-wrap: wrap;
+}
+
+.tmi-filter-apply,
+.tmi-filter-clear {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	padding: .7rem 1rem;
+	border-radius: 4px;
+	text-decoration: none;
+}
+
+.tmi-filter-apply {
+	cursor: pointer;
+}
+
+@media (max-width: 767px) {
+	.tmi-filter-price-inputs {
+		grid-template-columns: 1fr;
+	}
+}
