@@ -72,6 +72,37 @@
 	cursor: pointer;
 }
 
+/*
+ * AJAX enhancement.
+ * The submit button remains available when JavaScript is disabled.
+ */
+.tmi-filter-js .tmi-filter-apply {
+	display: none;
+}
+
+.tmi-category-filter.is-loading {
+	pointer-events: none;
+	opacity: .72;
+}
+
+#tmi-product-results,
+ul.products {
+	transition: opacity .18s ease;
+}
+
+#tmi-product-results.tmi-is-loading,
+ul.products.tmi-is-loading {
+	pointer-events: none;
+	opacity: .45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#tmi-product-results,
+	ul.products {
+		transition: none;
+	}
+}
+
 @media (max-width: 767px) {
 	.tmi-filter-price-inputs {
 		grid-template-columns: 1fr;
