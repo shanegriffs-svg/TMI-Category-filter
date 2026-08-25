@@ -62,7 +62,9 @@ final class TMI_Filter_Renderer {
 			</div>
 
 			<div class="tmi-filter-actions">
-				<button type="submit" class="tmi-filter-apply"><?php esc_html_e( 'Apply Filters', 'tmi-category-filter' ); ?></button>
+				<noscript>
+					<button type="submit" class="tmi-filter-apply"><?php esc_html_e( 'Apply Filters', 'tmi-category-filter' ); ?></button>
+				</noscript>
 				<a class="tmi-filter-clear" href="<?php echo esc_url( get_term_link( $category ) ); ?>"><?php esc_html_e( 'Clear Filters', 'tmi-category-filter' ); ?></a>
 			</div>
 		</form>
