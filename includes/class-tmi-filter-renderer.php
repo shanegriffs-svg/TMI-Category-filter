@@ -19,8 +19,8 @@ final class TMI_Filter_Renderer {
 		$params            = TMI_Filter_Config::get_query_params();
 		$product_ids       = self::get_base_category_product_ids( $category );
 		$price_min_limit   = 0;
-		$price_max_limit   = 50000;
 		$price_step        = 500;
+		$price_max_limit   = self::get_dynamic_price_max_limit( $category, $attribute_filters, $params, $price_step, $product_ids );
 		$current_min_price = self::get_price_value( $params['min_price'], $price_min_limit, $price_min_limit, $price_max_limit );
 		$current_max_price = self::get_price_value( $params['max_price'], $price_max_limit, $price_min_limit, $price_max_limit );
 
@@ -28,8 +28,9 @@ final class TMI_Filter_Renderer {
 			$current_min_price = $current_max_price;
 		}
 
-		$min_position = ( ( $current_min_price - $price_min_limit ) / ( $price_max_limit - $price_min_limit ) ) * 100;
-		$max_position = ( ( $current_max_price - $price_min_limit ) / ( $price_max_limit - $price_min_limit ) ) * 100;
+		$price_range  = max( 1, $price_max_limit - $price_min_limit );
+		$min_position = ( ( $current_min_price - $price_min_limit ) / $price_range ) * 100;
+		$max_position = ( ( $current_max_price - $price_min_limit ) / $price_range ) * 100;
 
 		ob_start();
 		?>
@@ -144,6 +145,83 @@ final class TMI_Filter_Renderer {
 				),
 			)
 		);
+	}
+
+	private static function get_dynamic_price_max_limit( WP_Term $category, $attribute_filters, $params, $price_step, $base_product_ids ) {
+		$tax_query = array(
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'term_id',
+				'terms'            => array( $category->term_id ),
+				'include_children' => true,
+			),
+		);
+
+		foreach ( $attribute_filters as $filter_key => $filter ) {
+			if ( empty( $params[ $filter_key ] ) ) {
+				continue;
+			}
+
+			$selected = self::get_selected_values( $params[ $filter_key ] );
+
+			if ( ! $selected ) {
+				continue;
+			}
+
+			$tax_query[] = array(
+				'taxonomy' => $filter['taxonomy'],
+				'field'    => 'slug',
+				'terms'    => $selected,
+				'operator' => 'IN',
+			);
+		}
+
+		if ( count( $tax_query ) > 1 ) {
+			$tax_query['relation'] = 'AND';
+		}
+
+		$meta_query = array();
+
+		if ( isset( $params['stock'] ) && 'instock' === self::get_scalar_value( $params['stock'] ) ) {
+			$meta_query[] = array(
+				'key'     => '_stock_status',
+				'value'   => 'instock',
+				'compare' => '=',
+			);
+		}
+
+		$query_args = array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => -1,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'tax_query'              => $tax_query,
+		);
+
+		if ( $meta_query ) {
+			$query_args['meta_query'] = $meta_query;
+		}
+
+		$matching_product_ids = get_posts( $query_args );
+		$price_product_ids    = $matching_product_ids ? $matching_product_ids : $base_product_ids;
+		$highest_price        = 0.0;
+
+		foreach ( $price_product_ids as $product_id ) {
+			$price = get_post_meta( $product_id, '_price', true );
+
+			if ( is_numeric( $price ) ) {
+				$highest_price = max( $highest_price, (float) $price );
+			}
+		}
+
+		if ( $highest_price <= 0 ) {
+			return 50000;
+		}
+
+		return max( $price_step, (int) ( ceil( $highest_price / $price_step ) * $price_step ) );
 	}
 
 	private static function get_terms_for_products( $taxonomy, $product_ids, $numeric_sort = false ) {
