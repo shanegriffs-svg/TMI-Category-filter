@@ -2,7 +2,7 @@
 
 A lightweight WooCommerce archive filter built specifically for TMI Tractor Shop.
 
-## Version 0.2.2
+## Version 0.2.4
 
 Initial target: the `zero-turn-mowers` product category and every descendant category.
 
@@ -41,12 +41,20 @@ Within Zero Turn Mowers and its descendants:
 AJAX filtering uses the browser Fetch API as a progressive enhancement.
 
 - Brand, Application, Deck Size and Stock update immediately when a selection changes.
-- Price inputs update after a short typing delay.
+- The price filter uses a dual-ended range slider from $0 to $50,000 in $500 steps. Values update while dragging and the AJAX filter runs when the handle is released.
 - The browser URL is updated so the filtered view can be bookmarked or shared.
 - Back/Forward navigation reloads the matching filtered results without a full page refresh.
 - The Apply Filters button is rendered only inside `<noscript>`, so it appears only when JavaScript is unavailable.
-- Version 0.2.2 replaces only the WooCommerce product/results elements rather than replacing the surrounding Elementor results container. This preserves surrounding Elementor and theme state, including OceanWP Quick View behavior.
+- AJAX replaces only the WooCommerce product/results elements rather than replacing the surrounding Elementor results container.
 - A minimum visible loading period is used so the product area fade is noticeable even when the filtered response is fast.
+
+## Filter presentation
+
+- Brand and Application use compact checkbox rows.
+- Deck Size uses compact four-column selection tiles in the narrow archive sidebar.
+- Price uses a dual-ended slider with visible Min and Max values.
+- Stock is presented as a highlighted Available In Store option.
+- Clear Filters remains a full-width secondary action.
 
 ### Recommended Elementor results wrapper
 
@@ -54,7 +62,7 @@ Set the Elementor CSS ID below on the container that contains the WooCommerce ar
 
 `tmi-product-results`
 
-The wrapper is used for the loading/fade state only. The plugin no longer replaces the entire Elementor wrapper during AJAX updates.
+The wrapper is used for the loading/fade state only. The plugin does not replace the entire Elementor wrapper during AJAX updates.
 
 ## Installation
 
@@ -68,15 +76,16 @@ Add this shortcode where the filter should render, for example in an Elementor S
 
 `[tmi_category_filter]`
 
-## Testing v0.2.2
+## Testing v0.2.4
 
 1. Keep CSS ID `tmi-product-results` on the Elementor products/results container.
 2. Purge LiteSpeed cache after installing the updated plugin files.
 3. Visit the Zero Turn Mowers category in a fresh browser window.
-4. Confirm the Apply Filters button is not visible.
-5. Select Brand, Application or Deck Size and confirm the product area visibly fades while the results update without a full page reload.
-6. Confirm OceanWP Quick View works before and after an AJAX filter update.
-7. Select only Deck Size = 54" and confirm all matching 54" products remain regardless of Brand or Application.
-8. Add Application = Commercial and confirm results narrow to 54" + Commercial.
-9. Select Available In Store and confirm out-of-stock products disappear.
-10. Test the browser Back button and confirm the previous filter state/results return.
+4. Confirm Deck Size displays four compact choices per row.
+5. Confirm the price slider defaults to $0 and $50,000.
+6. Drag either price handle and confirm the displayed price changes immediately, with the product results updating after the handle is released.
+7. Select Brand, Application or Deck Size and confirm the results update without a full page reload.
+8. Select only Deck Size = 54" and confirm all matching 54" products remain regardless of Brand or Application.
+9. Add Application = Commercial and confirm results narrow to 54" + Commercial.
+10. Select Available In Store and confirm out-of-stock products disappear.
+11. Test the browser Back button and confirm the previous filter state/results return.
